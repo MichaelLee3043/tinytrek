@@ -7,28 +7,36 @@
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Fredoka One', sans-serif; background: linear-gradient(to bottom, #a8e6cf, #dcedc1); text-align: center; padding: 20px; }
-    input, select, button { margin: 10px; padding: 10px; font-size: 1.2em; width: 80%; }
+    input, select, button { margin: 10px; padding: 10px; font-size: 1.2em; width: 80%; max-width: 300px; }
     button { background: #4caf50; color: white; border: none; border-radius: 10px; cursor: pointer; }
-    #result { margin-top: 20px; font-size: 1.5em; padding: 20px; background: white; border-radius: 15px; max-width: 400px; margin: 20px auto; }
+    #result { margin-top: 20px; font-size: 1.5em; padding: 20px; background: white; border-radius: 15px; max-width: 400px; margin: 20px auto; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
     .emoji { font-size: 3em; }
-    .fallback-note { font-size: 0.8em; color: gray; }
+    .note { font-size: 0.8em; color: gray; margin-top: 10px; }
   </style>
 </head>
 <body>
   <h1>🐜 Tiny Trek</h1>
-  <p>Type two places (add state if small town, e.g. "Sheridan AR"). It uses real distances!</p>
-  <input id="start" placeholder="From (e.g. New York or Sheridan AR)">
-  <input id="end" placeholder="To (e.g. Los Angeles or Clarendon TX)">
+  <p>Any two places! Add state/country for small spots (e.g. "Sheridan AR").</p>
+  <input id="start" placeholder="From (e.g. New York or your address)">
+  <input id="end" placeholder="To (e.g. Los Angeles or Eiffel Tower)">
   <select id="select"></select>
   <button onclick="go()">GO!</button>
   <button onclick="share()" style="background:#ff6b6b; color:white; margin:10px; padding:10px; border:none; border-radius:10px; font-size:1.2em;">Share This Trip!</button>
   <div id="result"></div>
 
   <script>
+    // FREE TIER: 10 animals
     const creatures = [
       {name: 'Garden Ant', emoji: '🐜', speed_m_per_s: 0.03, stride_m: 0.005, fun_fact: 'Ants can carry 50x their body weight!'},
       {name: 'Snail', emoji: '🐌', speed_m_per_s: 0.013, stride_m: 0.03, fun_fact: 'Snails can sleep for 3 years!'},
-      {name: 'Tardigrade', emoji: '🦠', speed_m_per_s: 0.0001, stride_m: 0.00005, fun_fact: 'Tardigrades survive in space!'}
+      {name: 'Tardigrade', emoji: '🦠', speed_m_per_s: 0.0001, stride_m: 0.00005, fun_fact: 'Tardigrades survive in space!'},
+      {name: 'Beetle', emoji: '🪲', speed_m_per_s: 0.05, stride_m: 0.01, fun_fact: 'Beetles make up 25% of all animals!'},
+      {name: 'Frog', emoji: '🐸', speed_m_per_s: 0.5, stride_m: 0.2, fun_fact: 'Frogs jump 20x their body length!'},
+      {name: 'Mouse', emoji: '🐭', speed_m_per_s: 2.2, stride_m: 0.08, fun_fact: 'Mice can squeeze through a dime-sized hole!'},
+      {name: 'Cat', emoji: '🐱', speed_m_per_s: 13.4, stride_m: 0.5, fun_fact: 'Cats sleep 70% of their lives!'},
+      {name: 'Dog', emoji: '🐶', speed_m_per_s: 8.0, stride_m: 0.6, fun_fact: 'Dogs have 300 million smell receptors!'},
+      {name: 'Human', emoji: '🧍', speed_m_per_s: 1.4, stride_m: 0.75, fun_fact: 'Humans walk 110,000 km in a lifetime!'},
+      {name: 'Cheetah', emoji: '🐆', speed_m_per_s: 33.0, stride_m: 7.0, fun_fact: 'Cheetahs accelerate to 60 mph in 3 seconds!'}
     ];
 
     const select = document.getElementById('select');
@@ -39,35 +47,26 @@
       select.add(opt);
     });
 
-    // Fallback distances (km * 1000 for meters)
-    const fallbackDistances = {
-      'new york los angeles': 3940000,
-      'sheridan ar clarendon tx': 550000  // Example for small towns – adjust as needed
-    };
-
     async function go() {
-      const start = document.getElementById('start').value.toLowerCase();
-      const end = document.getElementById('end').value.toLowerCase();
+      const start = document.getElementById('start').value.trim();
+      const end = document.getElementById('end').value.trim();
       if (!start || !end) return alert('Type two places!');
       const c = creatures[select.value];
       const key = 'AIzaSyBNl4UcBxsjDUH9H-rEDbhacp6Mhq03_s';
       let meters = 0;
-      let isFallback = false;
+      let note = '';
       try {
-        const url = `https://api.allorigins.win/get?url=${encodeURIComponent('https://maps.googleapis.com/maps/api/distancematrix/json?origins=' + encodeURIComponent(start) + '&destinations=' + encodeURIComponent(end) + '&key=' + key)}`;
+        const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(start)}&destinations=${encodeURIComponent(end)}&key=${key}`;
         const resp = await fetch(url);
-        const data = await resp.json();
-        const parsed = JSON.parse(data.contents);
+        const parsed = await resp.json();
         if (parsed.rows[0].elements[0].status === 'OK') {
           meters = parsed.rows[0].elements[0].distance.value;
         } else {
-          throw new Error();
+          throw new Error(parsed.rows[0].elements[0].status);
         }
-      } catch {
-        // Fallback
-        const key = start + ' ' + end;
-        meters = fallbackDistances[key] || 3940000; // Default NYC-LA
-        isFallback = true;
+      } catch (e) {
+        note = '<p class="note">Using approx 3,940 km – add state/country for accuracy!</p>';
+        meters = 3940000; // NYC-LA fallback
       }
       const seconds = meters / c.speed_m_per_s;
       const steps = Math.round(meters / c.stride_m);
@@ -83,7 +82,7 @@
         ${t}<br><br>
         ${steps.toLocaleString()} steps<br><br>
         <i>${c.fun_fact}</i>
-        ${isFallback ? '<p class="fallback-note">Fallback distance used – add state for accuracy!</p>' : ''}
+        ${note}
       `;
     }
 
