@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tiny Trek</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Fredoka One', sans-serif; background: linear-gradient(to bottom, #a8e6cf, #dcedc1); text-align: center; padding: 20px; }
+    input, select, button { margin: 10px; padding: 10px; font-size: 1.2em; }
+    button { background: #4caf50; color: white; border: none; border-radius: 10px; cursor: pointer; }
+    #result { margin-top: 20px; font-size: 1.5em; }
+    .emoji { font-size: 3em; }
+  </style>
+</head>
+<body>
+  <h1>🐜 Tiny Trek</h1>
+  <p>How long for a tiny creature to walk between two places?</p>
+  <input id="start" placeholder="From (e.g. New York)">
+  <input id="end" placeholder="To (e.g. Los Angeles)">
+  <select id="select"></select>
+  <button onclick="go()">GO!</button>
+  <button onclick="share()" style="background:#ff6b6b; color:white; margin:10px; padding:10px; border:none; border-radius:10px; font-size:1.2em;">Share This Trip!</button>
+  <div id="result"></div>
+
+  <script>
+    const creatures = [
+      {name: 'Garden Ant', emoji: '🐜', speed_m_per_s: 0.03, stride_m: 0.005, fun_fact: 'Ants can carry 50x their body weight!'},
+      {name: 'Snail', emoji: '🐌', speed_m_per_s: 0.013, stride_m: 0.03, fun_fact: 'Snails can sleep for 3 years!'},
+      {name: 'Tardigrade', emoji: '🦠', speed_m_per_s: 0.0001, stride_m: 0.00005, fun_fact: 'Tardigrades survive in space!'}
+    ];
+
+    const select = document.getElementById('select');
+    creatures.forEach((c, i) => {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.text = c.emoji + ' ' + c.name;
+      select.add(opt);
+    });
+
+    async function go() {
+      const start = document.getElementById('start').value;
+      const end = document.getElementById('end').value;
+      if (!start || !end) return alert('Type two places!');
+      const c = creatures[select.value];
+      const key = 'AIzaSyBNl4UcBxsjDUH9H-rEDbhacp6Mhq03_s';
+      try {
+        const url = `https://api.allorigins.win/get?url=${encodeURIComponent('https://maps.googleapis.com/maps/api/distancematrix/json?origins=' + encodeURIComponent(start) + '&destinations=' + encodeURIComponent(end) + '&key=' + key)}`;
+        const resp = await fetch(url);
+        const data = await resp.json();
+        const parsed = JSON.parse(data.contents);
+        if (parsed.rows[0].elements[0].status !== 'OK') throw new Error();
+        const meters = parsed.rows[0].elements[0].distance.value;
+        const seconds = meters / c.speed_m_per_s;
+        const steps = Math.round(meters / c.stride_m);
+        const years = Math.floor(seconds / 31536000);
+        const days = Math.floor((seconds % 31536000) / 86400);
+        const hours = Math.floor((seconds % 86400) / 3600);
+        let t = '';
+        if(years > 0) t += years + ' years, ';
+        t += days + ' days, ' + hours + ' hours';
+        document.getElementById('result').innerHTML = `
+          <div class="emoji">${c.emoji}</div>
+          <b>${c.name}</b><br><br>
+          ${t}<br><br>
+          ${steps.toLocaleString()} steps<br><br>
+          <i>${c.fun_fact}</i>
+        `;
+      } catch {
+        alert('Try "New York" to "Los Angeles"');
+      }
+    }
+
+    function share() {
+      const text = document.getElementById('result').innerText + '\n\n🐜 Tiny Trek: ' + location.href;
+      navigator.clipboard.writeText(text);
+      alert('Copied! Paste on TikTok or anywhere!');
+    }
+  </script>
+</body>
+</html>
