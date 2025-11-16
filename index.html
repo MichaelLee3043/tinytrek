@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Tiny Trek</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 20px; background: #f0f8ff; }
+    input, select, button { font-size: 1.2em; margin: 10px; padding: 10px; width: 90%; }
+    button { background: #4CAF50; color: white; border: none; border-radius: 10px; }
+    #result { font-size: 1.5em; margin: 30px; padding: 20px; background: white; border-radius: 15px; }
+    .emoji { font-size: 4em; }
+  </style>
+</head>
+<body>
+  <h1>🐜 Tiny Trek 🐌</h1>
+  <p>Type two places and pick an animal!</p>
+  <input id="start" placeholder="From (like your house)">
+  <input id="end" placeholder="To (like Disney World)">
+  <select id="creature"></select>
+  <button onclick="go()">GO!</button>
+  <div id="result"></div>
+
+  <script>
+    const creatures = [
+      {"id":"ant","name":"Garden Ant","emoji":"🐜","speed_m_per_s":0.0139,"stride_m":0.003,"fun_fact":"Carries 50× its body weight. Still slower than grandma."},
+      {"id":"snail","name":"Garden Snail","emoji":"🐌","speed_m_per_s":0.0004,"stride_m":0.013,"fun_fact":"Leaves a silver trail home… eventually."},
+      {"id":"human","name":"Average Human","emoji":"👤","speed_m_per_s":1.4,"stride_m":0.75,"fun_fact":"Faster than 98% of animals."},
+      {"id":"cheetah","name":"Cheetah (walking)","emoji":"🐆","speed_m_per_s":1.34,"stride_m":2,"fun_fact":"Sprints 120 km/h but walks like it’s late for yoga."},
+      {"id":"tardigrade","name":"Tardigrade","emoji":"🔬","speed_m_per_s":0.0000003,"stride_m":0.0000005,"fun_fact":"Survives space. Still takes 800 years to cross a room."},
+      {"id":"sloth","name":"Three-toed Sloth","emoji":"🦥","speed_m_per_s":0.067,"stride_m":0.15,"fun_fact":"Moves only 4 hours a day."},
+      {"id":"penguin","name":"Emperor Penguin","emoji":"🐧","speed_m_per_s":0.75,"stride_m":0.3,"fun_fact":"Waddles like it’s on ice… because it is."},
+      {"id":"trex","name":"T-Rex","emoji":"🦖","speed_m_per_s":5.5,"stride_m":4,"fun_fact":"Tiny arms, huge steps!"}
+    ];
+
+    const select = document.getElementById('creature');
+    creatures.forEach((c,i)=>{let o=document.createElement('option');o.value=i;o.text=c.emoji+' '+c.name;select.add(o);});
+
+    function go() {
+      const start = document.getElementById('start').value;
+      const end = document.getElementById('end').value;
+      if (!start || !end) return alert('Type two places!');
+      const c = creatures[select.value];
+      const meters = 4500000;
+      const seconds = meters / c.speed_m_per_s;
+      const steps = Math.round(meters / c.stride_m);
+      const years = Math.floor(seconds / 31536000);
+      const days = Math.floor((seconds % 31536000) / 86400);
+      const hours = Math.floor((seconds % 86400) / 3600);
+      let t = '';
+      if(years>0) t += years + ' years, ';
+      t += days + ' days, ' + hours + ' hours';
+      document.getElementById('result').innerHTML = `
+        <div class="emoji">${c.emoji}</div>
+        <b>${c.name}</b><br><br>
+        ${t}<br><br>
+        ${steps.toLocaleString()} steps<br><br>
+        <i>${c.fun_fact}</i>
+      `;
+    }
+  </script>
+</body>
+</html>
